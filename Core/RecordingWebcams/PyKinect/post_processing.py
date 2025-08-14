@@ -147,7 +147,7 @@ class PostProcessor:
     def _find_gesture_segments(self, segment_duration=15):
         """
         Find gesture segments with fixed 15-second duration starting at each gesture.
-        Excludes segments that start within the first 5 seconds (reading time).
+        Excludes segments that start within the first 5 seconds of camera recording (reading time).
         
         Args:
             segment_duration: Duration of each segment in seconds (default: 15)
@@ -156,6 +156,12 @@ class PostProcessor:
             List of dictionaries with segment info
         """
         segments = []
+        
+        # Get camera recording start time from the first available camera
+        camera_start_time = self._get_camera_start_time()
+        
+        print(f"Camera recording started at: {camera_start_time}")
+        print(f"Reading time cutoff: {camera_start_time + timedelta(seconds=self.reading_time_cutoff)}")
         
         for idx, row in self.gesture_labels.iterrows():
             gesture_time = row['Timestamp']
@@ -166,9 +172,9 @@ class PostProcessor:
             start_time = gesture_time
             end_time = gesture_time + timedelta(seconds=segment_duration)
             
-            # Skip segments that start within the first 5 seconds (reading time)
-            if start_time < self.gesture_labels['Timestamp'].iloc[0] + timedelta(seconds=self.reading_time_cutoff):
-                print(f"Skipping segment {idx}: starts during reading time")
+            # Skip segments that start within the first 5 seconds of camera recording (reading time)
+            if start_time < camera_start_time + timedelta(seconds=self.reading_time_cutoff):
+                print(f"Skipping segment {idx}: starts during reading time (camera started at {camera_start_time})")
                 continue
             
             # Check if this segment overlaps with previous one
@@ -280,6 +286,21 @@ class PostProcessor:
         
         print(f"Extracted {frames_written} frames to {output_path} (FPS: {output_fps})")
         return True
+    
+    def _get_camera_start_time(self):
+        """
+        Get the start time of camera recording from the first available camera.
+        
+        Returns:
+            datetime: Start time of camera recording
+        """
+        for camera_id in self.cameras:
+            frame_timestamps = self._get_frame_timestamps(camera_id)
+            if not frame_timestamps.empty:
+                return frame_timestamps['Timestamp'].iloc[0]
+        
+        # Fallback: return first gesture time if no camera data available
+        return self.gesture_labels['Timestamp'].iloc[0]
     
     def _get_segment_start_time(self, segment_name):
         """
