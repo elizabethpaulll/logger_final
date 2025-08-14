@@ -49,7 +49,7 @@ visible_cam = -1
 
 frame_size = (1920, 1080)
 
-fps = 30
+fps = 24
 buffer_size = 2
 
         
@@ -98,8 +98,8 @@ class CamController:
         self.writer_sleep_time = 10.0
         self.debug_frequency_log = []
         self.adaptive_drift = 0
+        self.ping_rate = (1/fps)  # Calculate ping rate based on fps
         
-
         self.labeling = False
         # self.camera_log_file = open(log_base_path+ "log_cam_all__participant " + participant_id + ".csv", "w")
         # if os.path.isfile(self.path): self.camera_log_file = open(log_base_path+ "log_cam_all__participant " + participant_id + ".csv", "a")
@@ -124,7 +124,7 @@ class CamController:
         # Modify camera configuration
         device_config = pykinect.default_configuration
         device_config.color_format = pykinect.K4A_IMAGE_FORMAT_COLOR_BGRA32
-        device_config.camera_fps = pykinect.K4A_FRAMES_PER_SECOND_30
+        device_config.camera_fps = pykinect.K4A_FRAMES_PER_SECOND_24
         device_config.color_resolution = pykinect.K4A_COLOR_RESOLUTION_1080P
         device_config.depth_mode = pykinect.K4A_DEPTH_MODE_WFOV_2X2BINNED
 
@@ -136,6 +136,7 @@ class CamController:
 
 
         # Start reading frames
+        last_capture_time = time.time()
         while not self.stopped:
 
             current_time = time.time()
@@ -157,7 +158,9 @@ class CamController:
                     self.ready_state = True 
             else:        
                 #if frames can be read, start logging
-                #if current_time-last_capture_time>=self.ping_rate:
+                if current_time-last_capture_time>=self.ping_rate:
+                    last_capture_time = current_time
+                    
                     self.ret_color, self.c_image = capture.get_color_image()#get color			
                     self.ret_ir, self.ir_image = capture.get_ir_image()#get infrared
                     self.ret_depth, self.d_image = capture.get_depth_image()#get depth

@@ -44,8 +44,8 @@ class PostProcessor:
         # Model training parameters
         self.reading_time_cutoff = 5  # Cut first 5 seconds (reading time)
         self.min_segment_duration = 3  # Minimum segment duration for training
-        self.target_fps = 30  # Standardize to 30 FPS for training
-        self.frame_extraction_fps = 30  # Extract frames at 30 FPS
+        self.target_fps = 24  # Standardize to 24 FPS for training (matching camera settings)
+        self.frame_extraction_fps = 24  # Extract frames at 24 FPS (matching camera settings)
     
     def _load_gesture_labels(self):
         """Load gesture labels from auto_labels CSV file."""
@@ -261,7 +261,7 @@ class PostProcessor:
         cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame_idx)
         
         # Calculate exact number of frames needed for 15 seconds
-        target_frames = int(15 * output_fps)  # 15 seconds × 30 FPS = 450 frames
+        target_frames = int(15 * output_fps)  # 15 seconds × 24 FPS = 360 frames
         
         # Extract exactly target_frames frames for consistent training data
         frame_count = 0

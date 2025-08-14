@@ -144,30 +144,31 @@ class WebcamStream:
         Thread(target=self.__write_img__, args=()).start()
 
         #set timing
-        #last_time = time.time()
+        last_time = time.time()
         #data loop
         while not self.stopped:
 
                 current_time = time.time()
-            # if current_time-last_time>=self.ping_rate: #if ping rate reached --> get data
+                if current_time-last_time>=self.ping_rate: #if ping rate reached --> get data
+                    last_time = current_time
                 
-                (self.read, self.frame) = self.stream.read()
-                self.frame_name = self.path+str(f"frame_{frame_id}.jpg")
+                    (self.read, self.frame) = self.stream.read()
+                    self.frame_name = self.path+str(f"frame_{frame_id}.jpg")
 
-                #put current log line into buffer
-                self.log_buffer.put(";".join([str(datetime.now()), str(self.read), self.frame_name])+"\r")
+                    #put current log line into buffer
+                    self.log_buffer.put(";".join([str(datetime.now()), str(self.read), self.frame_name])+"\r")
 
-                #error message if streams fail
-                if not self.read or not self.stream.isOpened():
-                    print(f"{self.debug_base}Frame could not be read on camera. Stopping webcam stream for camera {self.id}.")
-                    self.stop()
-                    break
-                else:
-                    #put images and related path in streaming buffer for writer threads to save them
-                    self.stream_buffer.put((self.frame_name, self.frame))
-                    frame_id += 1
-                    #self.check_writing()
-                self.debug_frequency_log.append((str(datetime.now()),time.time()-current_time))
+                    #error message if streams fail
+                    if not self.read or not self.stream.isOpened():
+                        print(f"{self.debug_base}Frame could not be read on camera. Stopping webcam stream for camera {self.id}.")
+                        self.stop()
+                        break
+                    else:
+                        #put images and related path in streaming buffer for writer threads to save them
+                        self.stream_buffer.put((self.frame_name, self.frame))
+                        frame_id += 1
+                        #self.check_writing()
+                    self.debug_frequency_log.append((str(datetime.now()),time.time()-current_time))
                 
                 
         #self.check_writing()
